@@ -87,7 +87,6 @@
         .status-btn.active-return { background: #F8FAFC; border-color: #94A3B8; color: #334155; font-weight: 800; }
         .status-btn.active-cancel { background: #FEF2F2; border-color: #FCA5A5; color: #DC2626; font-weight: 800; }
 
-        /* 필터 버튼 스타일 */
         .chip-btn { 
             border: 1px solid var(--border); 
             background: white; 
@@ -436,7 +435,7 @@
             const btn = document.getElementById('venue-toggle');
             const venueFilters = document.getElementById('venue-filters');
             if(isVenueMode) {
-                btn.className = "w-[70px] flex items-center justify-center h-[44px] px-1 rounded-xl text-[11px] font-extrabold border border-blue-500 bg-blue-50 text-blue-600 shadow-sm shrink-0 whitespace-nowrap transition-colors";
+                btn.className = "w-[70px] flex items-center justify-center h-[44px] px-1 rounded-xl text-[11px] font-extrabold border border-blue-500 bg-blue-50 text-blue-600 shadow-sm active:scale-95 shrink-0 whitespace-nowrap transition-colors";
                 if(venueFilters) venueFilters.classList.remove('hidden');
                 setVenueFilter('venue_remaining'); 
             } else {
@@ -473,16 +472,17 @@
         function openCalendar() {
             calCurrentDate = selectedDate ? new Date(selectedDate) : new Date();
             renderCalendar();
-            document.getElementById('calendar-modal-root').style.display = 'flex';
-            setTimeout(() => document.getElementById('calendar-modal-root').classList.add('active'), 10);
+            const root = document.getElementById('calendar-modal-root');
+            if(root) {
+                root.style.display = 'flex';
+                setTimeout(() => root.classList.add('active'), 10);
+            }
             document.body.classList.add('modal-open');
         }
         function closeCalendar() {
-            document.getElementById('calendar-modal-root').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('calendar-modal-root').style.display = 'none';
-                document.body.classList.remove('modal-open');
-            }, 300);
+            const root = document.getElementById('calendar-modal-root');
+            if(root) root.classList.remove('active');
+            setTimeout(() => { if(root) root.style.display = 'none'; document.body.classList.remove('modal-open'); }, 300);
         }
         function moveMonth(step) { calCurrentDate.setMonth(calCurrentDate.getMonth() + step); renderCalendar(); }
         function renderCalendar() {
@@ -605,15 +605,15 @@
             const container = document.getElementById('list-container');
             if(!container) return;
             container.innerHTML = '';
-            if(!list.length) { container.innerHTML = `<div class="py-20 text-center text-slate-400 text-xs font-medium">검색 결과가 없습니다.</div>`; return; }
+            if(!list.length) { container.innerHTML = `<div class="py-20 text-center text-slate-400 text-xs font-medium">결과가 없습니다.</div>`; return; }
             list.forEach(item => {
                 let badgeClass = 'status-wait', badgeText = '신청';
                 if(item.status === '확정') { badgeClass = 'status-confirm'; badgeText = '확정'; }
                 else if(item.status === '반납완료') { badgeClass = 'status-return'; badgeText = '반납'; }
                 else if(item.status === '취소') { badgeClass = 'status-cancel'; badgeText = '취소'; }
 
-                const truck = item.trackingNumber ? '<span class="ml-1 text-[10px]">🚚</span>' : '';
-                const memo = item.memo ? '<span class="ml-1 text-[10px] text-orange-500">📝</span>' : '';
+                const truck = item.trackingNumber ? '🚚' : '';
+                const memo = item.memo ? '<span class="ml-1 text-orange-500">📝</span>' : '';
                 let displayModel = (item.model || '').replace(/\s*\+?\s*보조배터리/g, '').trim();
                 let battery = (item.model || '').includes('보조배터리') ? '<span class="text-amber-500 text-[10px] ml-0.5 font-bold">⚡</span>' : '';
                 const start = (item.startDate || '').substring(5).replace('-','.');
@@ -624,6 +624,7 @@
                 const card = document.createElement('div');
                 card.className = "card px-5 py-4 relative";
                 card.onclick = () => openModal(item);
+                
                 card.innerHTML = `
                     <div class="absolute top-4 right-5 text-[10px] text-slate-600 font-black tracking-tight">${time}</div>
                     <div class="flex justify-between items-end">
@@ -642,7 +643,12 @@
                                 <span class="truncate text-slate-400 font-medium max-w-[120px]">${clean(item.delivery)}➔${clean(item.returnWay)}</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1 shrink-0 pb-0.5"><div class="text-[11px]">${truck}</div></div>
+                        <div class="flex flex-col items-end shrink-0 pb-0.5">
+                            <div class="flex items-center gap-1 text-[11px] text-slate-500 font-extrabold max-w-[150px]">
+                                <span class="truncate">${item.scheduleName || ''}</span>
+                                <span class="text-[12px]">${truck}</span>
+                            </div>
+                        </div>
                     </div>`;
                 container.appendChild(card);
             });
