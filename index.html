@@ -40,17 +40,17 @@
         .card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 16px; 
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
         }
         .card:active { background-color: #F1F5F9; border-color: #CBD5E1; transform: scale(0.97); }
 
-        .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; line-height: 1; height: 20px; border: 1px solid transparent; }
-        .status-wait { background-color: #F0F9FF; color: #0284C7; border-color: #BAE6FD; }
-        .status-confirm { background-color: #ECFDF5; color: #059669; border-color: #A7F3D0; }
-        .status-return { background-color: #F8FAFC; color: #475569; border-color: #E2E8F0; }
+        .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; line-height: 1; border: 1px solid transparent; }
+        .status-wait { background-color: #FFF7ED; color: #C2410C; border-color: #FED7AA; }
+        .status-confirm { background-color: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+        .status-return { background-color: #F1F5F9; color: #475569; border-color: #E2E8F0; }
         .status-cancel { background-color: #FEF2F2; color: #DC2626; border-color: #FECACA; }
 
         .header-fixed {
@@ -59,18 +59,27 @@
             border-bottom: 1px solid var(--border);
         }
 
-        #modal-root { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 200; display: none; justify-content: flex-end; flex-direction: column; align-items: center; }
-        #modal-root.active { display: flex; }
+        /* 모달 시스템 */
+        #modal-root, #calendar-modal-root { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 200; 
+            display: none; justify-content: center; align-items: center; 
+        }
+        #modal-root.active, #calendar-modal-root.active { display: flex; }
         
         .modal-overlay { position: absolute; inset: 0; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); }
 
-        .bottom-sheet {
-            position: relative; width: 100%; max-width: 28rem; background-color: #FFFFFF;
-            border-top-left-radius: 28px; border-top-right-radius: 28px; height: 88vh;
-            display: flex; flex-direction: column; transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); z-index: 210;
+        .center-modal {
+            position: relative; width: 92%; max-width: 400px; 
+            background-color: #FFFFFF;
+            border-radius: 24px; 
+            max-height: 90vh;
+            display: flex; flex-direction: column; 
+            transform: scale(0.95); opacity: 0;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); 
+            z-index: 210;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-        #modal-root.active .bottom-sheet { transform: translateY(0); }
+        #modal-root.active .center-modal, #calendar-modal-root.active .center-modal { transform: scale(1); opacity: 1; }
 
         .scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px; }
 
@@ -142,6 +151,32 @@
 
         .model-select-chip { padding: 8px 12px; border-radius: 10px; border: 1px solid #E2E8F0; background: white; color: #64748B; font-size: 12px; font-weight: 700; transition: all 0.2s; flex-shrink: 0; }
         .model-select-chip.active { background: #1E293B; color: white; border-color: #1E293B; }
+        
+        .header-input-box { height: 44px; display: flex; align-items: center; background: white; border: 1px solid #E2E8F0; border-radius: 14px; transition: all 0.2s; }
+        .header-input-box:active { background: #F8FAFC; transform: scale(0.98); }
+        
+        .sort-btn { 
+            border: 1px solid var(--border); 
+            background: white; 
+            color: var(--text-sub); 
+            transition: all 0.1s; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: 700; 
+            padding: 8px 12px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .sort-btn.active { background: #1E293B; color: white; border-color: #1E293B; }
+
+        /* 토스트 메시지 애니메이션 */
+        @keyframes fade-in-up {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            100% { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .toast-msg { animation: fade-in-up 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-safe">
@@ -151,7 +186,7 @@
         <div class="px-4 pt-4 pb-1">
             <!-- [ROW 1] 검색 / 달력 / 공연장 / 새로고침 -->
             <div class="flex items-center gap-1.5 mb-2">
-                <div class="flex-1 relative h-[44px] bg-slate-50 border border-slate-200 rounded-xl flex items-center px-3 transition-all focus-within:bg-white focus-within:border-blue-400 shadow-sm">
+                <div class="flex-1 relative header-input-box px-3 transition-all focus-within:bg-white focus-within:border-blue-400 shadow-sm">
                     <svg class="text-slate-400 mr-2 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     <input type="text" id="search-input" onkeyup="filterData()" placeholder="이름/번호 검색" class="w-full bg-transparent border-none text-[13px] font-bold text-slate-900 placeholder-slate-400 outline-none p-0 h-full">
                 </div>
@@ -224,22 +259,23 @@
                 </div>
             </div>
         </div>
+        <input type="date" id="filter-date" class="hidden">
     </header>
 
     <!-- 2. 리스트 영역 -->
     <main id="main-content" class="px-4 py-3 pb-32">
         <div id="loading" class="flex flex-col items-center justify-center py-24">
             <div class="w-9 h-9 border-4 border-slate-100 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-[13px] font-bold text-slate-400">정보를 가져오고 있어요</p>
+            <p class="text-[13px] font-bold text-slate-400">목록을 불러오는 중...</p>
         </div>
-        <div id="list-container" class="space-y-3"></div>
+        <div id="list-container" class="grid grid-cols-2 gap-2.5"></div>
     </main>
 
-    <!-- 3. 상세 정보 모달 -->
+    <!-- 3. 상세 정보 모달 (중앙 팝업) -->
     <div id="modal-root">
         <div class="modal-overlay" onclick="closeModal()"></div>
-        <div class="bottom-sheet shadow-2xl">
-            <div class="px-6 py-5 border-b border-slate-200 flex-none bg-white rounded-t-[28px] flex justify-between items-center">
+        <div class="center-modal">
+            <div class="px-6 py-5 border-b border-slate-200 flex-none rounded-t-[24px] flex justify-between items-center shadow-sm bg-white">
                 <h2 class="text-[19px] font-black tracking-tight text-slate-900">예약 상세 내용</h2>
                 <button type="button" onclick="closeModal()" class="p-2 bg-slate-100 rounded-full text-slate-500 active:scale-90 transition-all">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -265,10 +301,14 @@
                                     </a>
                                 </div>
                             </div>
+                            <div class="col-span-12 input-group">
+                                <label class="input-label">결제 금액</label>
+                                <input type="text" id="edit-price" placeholder="금액 입력" inputmode="numeric" class="input-field font-bold text-blue-600">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section shadow-sm">
                         <div class="form-title">상태 및 기기 관리</div>
                         <div class="space-y-4">
                             <div>
@@ -310,7 +350,7 @@
                         </div>
                     </div>
 
-                    <div class="form-section">
+                    <div class="form-section shadow-sm">
                         <div class="form-title">대여 일정 및 방식</div>
                         <div class="grid grid-cols-2 gap-3 mb-4">
                             <div><label class="input-label">수령일</label><input type="date" id="edit-start" class="input-field"></div>
@@ -323,25 +363,25 @@
                     </div>
                 </form>
             </div>
-            <div class="p-5 border-t border-slate-100 flex gap-3 pb-8">
+            <div class="p-5 border-t border-slate-200 flex gap-3 rounded-b-[24px] bg-white">
                 <button type="button" onclick="confirmDelete()" class="w-1/4 bg-red-50 text-red-600 font-bold py-4 rounded-2xl active:scale-95 text-sm transition-all">삭제</button>
                 <button type="button" onclick="submitUpdate(event)" id="save-btn" class="w-3/4 bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-100 active:scale-95 text-base transition-all">수정 완료하기</button>
             </div>
         </div>
     </div>
 
-    <!-- 캘린더 모달 -->
+    <!-- 캘린더 모달 (중앙 팝업) -->
     <div id="calendar-modal-root">
         <div class="modal-overlay" onclick="closeCalendar()"></div>
-        <div class="calendar-sheet shadow-2xl">
-            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center rounded-t-[28px]">
+        <div class="center-modal">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center rounded-t-[24px] bg-white">
                 <h2 class="text-lg font-bold text-slate-800">수령일 선택</h2>
                 <button onclick="closeCalendar()" class="p-2 text-slate-400 transition-all"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
             </div>
             <div class="p-5">
                 <div class="flex justify-between items-center mb-6 px-4">
                     <button onclick="moveMonth(-1)" class="p-2 text-slate-500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-                    <div id="cal-month-title" class="text-lg font-black text-slate-900"></div>
+                    <div id="cal-month-title" class="text-xl font-black text-slate-900"></div>
                     <button onclick="moveMonth(1)" class="p-2 text-slate-500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
                 </div>
                 <div class="grid grid-cols-7 text-center mb-3">
@@ -370,7 +410,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwI5I0-DixwuepqkZSm9SDYDYu6hzKH6QSs8L3LR6ZlBPJyk1O_M_uI6DUVkvOVNYvscQ/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbx3s9Aa-z6j9MKdRUn-CJjLKW1JHmI12S5xb3-b9UIlACmY0Ag3ELEUA902pXwuN_oS5Q/exec"; 
         const MODEL_LIST = ['23U', '24U', '25U', '26U', '17P', '17PM', '백업', '연장'];
 
         let allData = [];
@@ -595,6 +635,22 @@
             ['택배', '당일', '공연장', '사무실'].forEach(k => updateBtn(`[data-return="${k}"]`, `${k}(${rCounts[k]})`));
         }
 
+        function copyToClipboard(text, e) {
+            if(e) e.stopPropagation();
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg z-50 animate-fade-in-up';
+            toast.innerText = '연락처가 복사되었습니다';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
         function renderList(list) {
             const container = document.getElementById('list-container');
             if(!container) return;
@@ -614,35 +670,64 @@
                 const end = (item.endDate || '').substring(5).replace('-','.');
                 const clean = t => (t||'').replace(/수령|반납/g, '').trim();
                 const time = formatTime(item.orderTime);
+                const price = (parseInt(String(item.totalPrice||0).replace(/[^0-9]/g, '')) || 0).toLocaleString() + '원';
+                const phoneLast4 = item.phone ? item.phone : '';
 
                 const card = document.createElement('div');
-                card.className = "card px-5 py-4 relative";
+                card.className = "card px-5 py-4 relative flex flex-col gap-3"; 
                 card.onclick = () => openModal(item);
+                
+                // [수정] 박스 내부 최상단에 모델+배터리 배치
                 card.innerHTML = `
-                    <div class="absolute top-4 right-5 text-[10px] text-slate-600 font-black tracking-tight">${time}</div>
-                    <div class="flex justify-between items-end">
-                        <div class="flex-1 min-w-0 pr-2">
-                            <div class="flex items-center gap-1.5 mb-1.5">
-                                <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-[5px] font-extrabold text-[12px] border border-slate-200">${displayModel || '미정'}</span>
-                                <span class="status-badge ${badgeClass}">${badgeText}</span>
-                                <span class="text-[16px] font-black text-slate-900 truncate tracking-tight">${item.name}</span>
-                                ${battery}${memo}
-                            </div>
-                            <div class="flex items-center text-[11px] text-slate-400 font-medium gap-2 pl-0.5">
-                                <span class="font-mono font-bold">${item.phone ? item.phone.substring(item.phone.length-4) : ''}</span>
-                                <span class="w-[1px] h-2.5 bg-slate-200"></span>
-                                <span class="tracking-tighter opacity-90">${start}~${end}</span>
-                                <span class="w-[1px] h-2.5 bg-slate-200"></span>
-                                <span class="truncate text-slate-400 font-medium max-w-[120px]">${clean(item.delivery)}➔${clean(item.returnWay)}</span>
-                            </div>
+                    <!-- 1열 (상태 / 시간) -->
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="status-badge ${badgeClass}">${badgeText}</span>
+                        <span class="text-[10px] text-slate-400 font-medium">${time}</span>
+                    </div>
+
+                    <!-- 2열 (이름 / 연락처) -->
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="text-[17px] font-black text-slate-900 truncate tracking-tight">${item.name}</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[12px] text-slate-500 font-medium tracking-tight">${phoneLast4}</span>
+                            <button onclick="copyToClipboard('${phoneLast4}', event)" class="text-slate-300 hover:text-blue-500 transition-colors">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
                         </div>
-                        <div class="flex flex-col items-end shrink-0 pb-0.5">
-                            <div class="flex items-center gap-1 text-[11px] text-slate-500 font-extrabold max-w-[150px]">
-                                <span class="truncate">${item.scheduleName || ''}</span>
-                                <span class="text-[12px]">${truck}</span>
-                            </div>
-                        </div>
-                    </div>`;
+                    </div>
+
+                    <!-- 정보 박스 -->
+                    <div class="bg-slate-50 rounded-lg p-3 border border-slate-100 flex flex-col gap-1.5">
+                         <!-- [수정] 모델 + 배터리 (최상단 배치) -->
+                         <div class="flex items-center gap-1 pb-1.5 border-b border-slate-200 border-dashed">
+                             <span class="bg-white text-slate-700 px-2 py-0.5 rounded-[5px] font-extrabold text-[12px] border border-slate-200 shadow-sm truncate max-w-[120px]">${displayModel || '미정'}</span>
+                             ${battery}${memo}
+                         </div>
+
+                         <!-- 일정명 -->
+                         <div class="text-[14px] font-extrabold text-slate-800 truncate leading-tight">${item.scheduleName || '-'}</div>
+                         
+                         <!-- 기간 -->
+                         <div class="flex items-center gap-1 text-[12px] font-bold text-slate-600 tracking-tight">
+                            <svg class="text-slate-400 w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <span>${start} ~ ${end}</span>
+                         </div>
+
+                         <!-- 수령/반납 -->
+                         <div class="flex items-center justify-between">
+                             <div class="flex items-center gap-1 text-[13px] font-extrabold text-blue-600">
+                                 <svg class="text-blue-400 w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                                <span class="truncate max-w-[140px]">${clean(item.delivery)} <span class="text-slate-400 text-[11px] font-normal mx-0.5">➔</span> ${clean(item.returnWay)}</span>
+                             </div>
+                             <span class="text-[12px]">${truck}</span>
+                         </div>
+                    </div>
+
+                    <!-- 금액 -->
+                    <div class="flex justify-end items-center mt-auto pt-1">
+                        <span class="text-[16px] font-black text-slate-900 tracking-tight">${price}</span>
+                    </div>
+                `;
                 container.appendChild(card);
             });
         }
@@ -665,6 +750,7 @@
             document.getElementById('btn-call').href = `tel:${item.phone}`;
             document.getElementById('edit-tracking').value = item.trackingNumber || '';
             document.getElementById('edit-memo').value = item.memo || '';
+            document.getElementById('edit-price').value = (item.totalPrice || 0);
 
             let rawModel = item.model || '';
             const hasBattery = rawModel.includes('보조배터리');
@@ -675,7 +761,7 @@
             document.getElementById('edit-device-id').value = deviceId;
             document.getElementById('edit-battery').checked = hasBattery;
             const box = document.getElementById('battery-box');
-            if(box) box.className = hasBattery ? "w-full h-full border border-blue-500 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600 transition-all font-black text-xs" : "w-full h-full border border-slate-200 rounded-xl flex items-center justify-center bg-white text-slate-400 transition-all text-xs font-bold";
+            if(box) box.className = hasBattery ? "w-full h-full border border-blue-500 rounded-xl flex items-center justify-center bg-blue-50 text-blue-600 transition-all font-black text-xs" : "w-full h-full border border-[var(--border)] rounded-xl flex items-center justify-center bg-[var(--card-bg)] text-slate-400 transition-all text-xs font-bold";
             setEditStatus(item.status || '예약신청');
             if(root) { root.style.display = 'flex'; setTimeout(() => root.classList.add('active'), 10); }
             document.body.classList.add('modal-open');
@@ -717,14 +803,18 @@
             const btn = document.getElementById('save-btn');
             const originalText = btn.innerText;
             btn.innerText = '저장 중...'; btn.disabled = true;
+
             const modelType = document.getElementById('edit-model-type').value;
             const deviceId = document.getElementById('edit-device-id').value.trim();
             let finalModel = (modelType === '기타' ? deviceId : modelType + deviceId) + (document.getElementById('edit-battery').checked ? "+보조배터리" : "");
+            
+            const priceVal = document.getElementById('edit-price').value.replace(/[^0-9]/g, '');
+
             const payload = {
                 type: 'update', row: document.getElementById('edit-row').value, name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value,
                 startDate: document.getElementById('edit-start').value, endDate: document.getElementById('edit-end').value, delivery: document.getElementById('edit-delivery').value, 
                 returnWay: document.getElementById('edit-return-way').value, status: document.getElementById('edit-status-val').value, tracking: document.getElementById('edit-tracking').value,
-                model: finalModel, memo: document.getElementById('edit-memo').value
+                model: finalModel, memo: document.getElementById('edit-memo').value, totalPrice: priceVal 
             };
             try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); showAlert("정보를 수정했어요.", "완료", "✅"); closeModal(); setTimeout(fetchData, 500); } 
             catch(err) { showAlert("저장에 실패했습니다.", "오류", "❌"); } finally { btn.innerText = originalText; btn.disabled = false; }
@@ -742,8 +832,17 @@
         function showConfirm(msg, action) { openAlertModal("확인", msg, "🤔", `<button id="confirm-yes" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl text-base mb-2">삭제하기</button><button onclick="closeAlert()" class="w-full bg-white text-slate-500 border border-slate-200 font-bold py-4 rounded-2xl text-base">취소</button>`); document.getElementById('confirm-yes').onclick = () => { closeAlert(); action(); }; }
         function openAlertModal(title, msg, icon, btns) { document.getElementById('alert-title').innerText = title; document.getElementById('alert-msg').innerText = msg; document.getElementById('alert-icon').innerText = icon; document.getElementById('alert-actions').innerHTML = btns; document.getElementById('alert-modal').classList.remove('hidden'); }
         function closeAlert() { document.getElementById('alert-modal').classList.add('hidden'); }
+        
+        // [NEW] 토스트 애니메이션 추가
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fade-in-up {
+                0% { opacity: 0; transform: translate(-50%, 20px); }
+                100% { opacity: 1; transform: translate(-50%, 0); }
+            }
+            .animate-fade-in-up { animation: fade-in-up 0.3s ease-out forwards; }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
-
-
