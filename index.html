@@ -28,7 +28,6 @@
             width: 100%;
         }
 
-        /* Safe Area 대응 */
         .pt-safe { padding-top: env(safe-area-inset-top, 20px); }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
 
@@ -112,21 +111,32 @@
         .chip-btn.active { background: #1E293B !important; color: white !important; border-color: #1E293B !important; }
         .venue-active-btn.active { background: #1E293B !important; color: white !important; border-color: #1E293B !important; }
 
-        .header-icon-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #E2E8F0; border-radius: 14px; color: #64748B; transition: all 0.1s; }
+        .header-icon-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #E2E8F0; border-radius: 12px; color: #64748B; transition: all 0.1s; }
         .header-icon-btn:active { background: #F1F5F9; transform: scale(0.95); }
 
         .tab-btn { flex: 1; padding: 12px 0; font-size: 13px; font-weight: 700; color: #94A3B8; border-bottom: 2px solid transparent; transition: all 0.2s; text-align: center; }
         .tab-btn.active { color: #1E293B; border-bottom-color: #1E293B; }
 
-        #category-section { overflow: hidden; transition: max-height 0.3s ease-out; max-height: 200px; }
-        #category-section.collapsed { max-height: 0; }
+        /* [수정] 필터 영역 애니메이션: 패딩까지 완전히 사라지도록 설정 */
+        #category-section {
+            overflow: hidden;
+            transition: all 0.3s ease-out; /* 높이, 패딩, 투명도 모두 애니메이션 */
+            max-height: 250px;
+            opacity: 1;
+        }
+        #category-section.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin: 0 !important;
+        }
 
-        .model-select-chip { padding: 8px 12px; border-radius: 10px; border: 1px solid #E2E8F0; background: white; color: #64748B; font-size: 12px; font-weight: 700; transition: all 0.2s; flex-shrink: 0; }
-        .model-select-chip.active { background: #1E293B; color: white; border-color: #1E293B; }
+        .model-select-chip, .method-chip { padding: 8px 12px; border-radius: 10px; border: 1px solid #E2E8F0; background: white; color: #64748B; font-size: 12px; font-weight: 700; transition: all 0.2s; flex-shrink: 0; }
+        .model-select-chip.active, .method-chip.active { background: #1E293B; color: white; border-color: #1E293B; }
         
-        .header-input-box { height: 44px; display: flex; align-items: center; background: white; border: 1px solid #E2E8F0; border-radius: 14px; transition: all 0.2s; }
+        .header-input-box { height: 38px; display: flex; align-items: center; background: white; border: 1px solid #E2E8F0; border-radius: 12px; transition: all 0.2s; }
 
-        /* 캘린더 전용 스타일 */
         .cal-header-grid, .cal-body-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
         .cal-day-cell { 
             aspect-ratio: 1/1; 
@@ -145,33 +155,42 @@
             100% { opacity: 1; transform: translate(-50%, 0); }
         }
         .toast-msg { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #191F28; color: white; padding: 12px 20px; border-radius: 50px; font-size: 13px; font-weight: 700; z-index: 1000; animation: fade-in-up 0.3s ease-out; }
+
+        .rotate-180 { transform: rotate(180deg); }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-safe">
 
     <!-- 1. 헤더 영역 -->
     <header class="sticky top-0 z-30 header-fixed pt-safe bg-white/95">
-        <div class="px-4 pt-4 pb-1">
+        <div class="px-4 pt-3 pb-1">
+            <!-- 검색바 영역 -->
             <div class="flex items-center gap-1.5 mb-2">
                 <div class="flex-1 relative header-input-box px-3 shadow-sm focus-within:ring-1 focus-within:ring-blue-400">
-                    <svg class="text-slate-400 mr-2 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    <input type="text" id="search-input" onkeyup="filterData()" placeholder="이름/번호 검색" class="w-full bg-transparent border-none text-[13px] font-bold text-slate-900 placeholder-slate-400 outline-none p-0 h-full">
+                    <svg class="text-slate-400 mr-2 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="search-input" onkeyup="filterData()" placeholder="이름/연락처 검색" class="w-full bg-transparent border-none text-[12px] font-bold text-slate-900 placeholder-slate-400 outline-none p-0 h-full">
                 </div>
-                <button onclick="openCalendar()" class="header-fixed w-[44px] h-[44px] flex items-center justify-center border border-slate-200 rounded-xl bg-white shadow-sm relative active:scale-95 transition-all">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <div id="date-active-dot" class="hidden absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-blue-500 rounded-full border border-white"></div>
+                <button onclick="openCalendar()" class="header-icon-btn shadow-sm relative active:scale-95 transition-all">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <div id="date-active-dot" class="hidden absolute top-2 right-2 w-1.5 h-1.5 bg-blue-500 rounded-full border border-white"></div>
                 </button>
-                <button id="venue-toggle" onclick="toggleVenueMode()" class="w-[60px] flex items-center justify-center h-[44px] px-1 rounded-xl text-[10px] font-black border border-slate-200 bg-white text-slate-500 shadow-sm shrink-0 active:scale-95 transition-all">공연장</button>
-                <button onclick="fetchData()" class="header-icon-btn shadow-sm shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                <button id="venue-toggle" onclick="toggleVenueMode()" class="w-[50px] flex items-center justify-center h-[38px] px-1 rounded-xl text-[9px] font-black border border-slate-200 bg-white text-slate-500 shadow-sm shrink-0 active:scale-95 transition-all">공연장</button>
+                <button onclick="fetchData()" class="header-icon-btn shadow-sm shrink-0 active:scale-95 transition-all">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                 </button>
             </div>
 
-            <div id="active-date-bar" class="hidden mb-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex justify-between items-center">
-                <span id="active-date-text" class="text-blue-600 text-xs font-bold"></span>
-                <button onclick="clearDate(event)" class="text-blue-400 hover:text-blue-600 font-bold text-[10px] px-2 py-1 bg-white rounded-lg border border-blue-100">해제</button>
+            <!-- 이번주 택배 / 사무실 퀵 필터 -->
+            <div class="flex gap-1.5 mb-2 overflow-x-auto hide-scrollbar">
+                <button onclick="setSpecialFilter('this_week_parcel')" id="btn-quick-this-week" class="chip-btn flex items-center gap-1.5 active:scale-95 !rounded-full px-4 border-slate-300 flex-shrink-0">
+                    📦 이번주 택배 <span id="count-this-week-parcel" class="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-md text-[10px] font-black ml-1">0</span>
+                </button>
+                <button onclick="setSpecialFilter('this_week_office')" id="btn-quick-this-week-office" class="chip-btn flex items-center gap-1.5 active:scale-95 !rounded-full px-4 border-slate-300 flex-shrink-0">
+                    🏢 이번주 사무실 <span id="count-this-week-office" class="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-md text-[10px] font-black ml-1">0</span>
+                </button>
             </div>
 
+            <!-- 카테고리 탭 (접기 버튼 포함) -->
             <div class="flex border-b border-slate-100 relative pr-10">
                 <button onclick="switchTab('model')" id="tab-model" class="tab-btn active">📱 모델</button>
                 <button onclick="switchTab('service')" id="tab-service" class="tab-btn">🛠️ 서비스</button>
@@ -182,12 +201,14 @@
                 </button>
             </div>
             
+            <!-- 상세 필터 영역 (패딩 포함) -->
             <div id="category-section" class="pt-2 pb-1">
                 <div id="filter-group-model" class="flex gap-1.5 overflow-x-auto hide-scrollbar">
                     <button onclick="setModelFilter('all')" class="chip-btn model-filter-item active" data-id="all">전체</button>
                     <button onclick="setModelFilter('23U')" class="chip-btn model-filter-item" data-id="23U">23U</button>
                     <button onclick="setModelFilter('24U')" class="chip-btn model-filter-item" data-id="24U">24U</button>
                     <button onclick="setModelFilter('25U')" class="chip-btn model-filter-item" data-id="25U">25U</button>
+                    <button onclick="setModelFilter('26U')" class="chip-btn model-filter-item" data-id="26U">26U</button>
                     <button onclick="setModelFilter('17P')" class="chip-btn model-filter-item" data-id="17P">17P</button>
                     <button onclick="setModelFilter('17PM')" class="chip-btn model-filter-item" data-id="17PM">17PM</button>
                 </div>
@@ -217,6 +238,7 @@
                 </div>
             </div>
         </div>
+        <input type="date" id="filter-date" class="hidden">
     </header>
 
     <!-- 2. 리스트 영역 -->
@@ -228,7 +250,7 @@
         <div id="list-container" class="grid grid-cols-2 gap-3"></div>
     </main>
 
-    <!-- 3. 상세 정보 모달 (중앙 팝업) -->
+    <!-- 3. 상세 정보 모달 -->
     <div id="modal-root">
         <div class="modal-overlay" onclick="closeModal()"></div>
         <div class="center-modal shadow-2xl">
@@ -251,7 +273,7 @@
                             <div class="col-span-4 input-group"><label class="input-label">이름</label><input type="text" id="edit-name" class="input-field"></div>
                             <div class="col-span-8 input-group">
                                 <label class="input-label">연락처</label>
-                                <input type="text" id="edit-phone" class="input-field font-mono">
+                                <input type="text" id="edit-phone" class="input-field font-mono font-bold">
                             </div>
                         </div>
                     </div>
@@ -276,6 +298,7 @@
                                     <button type="button" onclick="selectEditModel('23U')" class="model-select-chip" data-val="23U">23U</button>
                                     <button type="button" onclick="selectEditModel('24U')" class="model-select-chip" data-val="24U">24U</button>
                                     <button type="button" onclick="selectEditModel('25U')" class="model-select-chip" data-val="25U">25U</button>
+                                    <button type="button" onclick="selectEditModel('26U')" class="model-select-chip" data-val="26U">26U</button>
                                     <button type="button" onclick="selectEditModel('17P')" class="model-select-chip" data-val="17P">17P</button>
                                     <button type="button" onclick="selectEditModel('17PM')" class="model-select-chip" data-val="17PM">17PM</button>
                                     <button type="button" onclick="selectEditModel('기타')" class="model-select-chip" data-val="기타">기타</button>
@@ -296,20 +319,41 @@
                                 <label class="input-label">결제 금액</label>
                                 <input type="text" id="edit-price" placeholder="금액 입력" inputmode="numeric" class="input-field font-bold text-blue-600">
                             </div>
-                            <div><label class="input-label">송장번호</label><input type="text" id="edit-tracking" placeholder="숫자만 입력" inputmode="numeric" class="input-field font-mono"></div>
+                            <div><label class="input-label">송장번호</label><input type="text" id="edit-tracking" placeholder="숫자만 입력" inputmode="numeric" class="input-field font-mono font-bold"></div>
                             <div><label class="input-label">메모</label><textarea id="edit-memo" rows="2" placeholder="메모 입력" class="input-field resize-none"></textarea></div>
                         </div>
                     </div>
 
+                    <!-- 대여 일정 및 방법 (아코디언 & 칩) -->
                     <div class="form-section shadow-sm">
-                        <div class="form-title">대여 일정</div>
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div><label class="input-label">수령일</label><input type="date" id="edit-start" class="input-field"></div>
-                            <div><label class="input-label">반납일</label><input type="date" id="edit-end" class="input-field"></div>
+                        <div class="flex justify-between items-center py-1 cursor-pointer" onclick="toggleSection('schedule-section', 'schedule-arrow')">
+                            <div class="form-title">대여 일정 및 방법</div>
+                            <svg id="schedule-arrow" class="w-5 h-5 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="input-label">수령 방법</label><input type="text" id="edit-delivery" class="input-field"></div>
-                            <div><label class="input-label">반납 방법</label><input type="text" id="edit-return-way" class="input-field"></div>
+                        <div id="schedule-section" class="mt-4">
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div><label class="input-label">수령일</label><input type="date" id="edit-start" class="input-field"></div>
+                                <div><label class="input-label">반납일</label><input type="date" id="edit-end" class="input-field"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="input-label">수령 방법</label>
+                                <div class="flex gap-1.5 overflow-x-auto hide-scrollbar" id="delivery-method-list">
+                                    <button type="button" onclick="selectMethod('delivery', '택배')" class="method-chip" data-val="택배">택배</button>
+                                    <button type="button" onclick="selectMethod('delivery', '공연장')" class="method-chip" data-val="공연장">공연장</button>
+                                    <button type="button" onclick="selectMethod('delivery', '사무실')" class="method-chip" data-val="사무실">사무실</button>
+                                    <button type="button" onclick="selectMethod('delivery', '퀵')" class="method-chip" data-val="퀵">퀵</button>
+                                </div>
+                                <input type="hidden" id="edit-delivery">
+                            </div>
+                            <div>
+                                <label class="input-label">반납 방법</label>
+                                <div class="flex gap-1.5 overflow-x-auto hide-scrollbar" id="return-method-list">
+                                    <button type="button" onclick="selectMethod('return', '택배')" class="method-chip" data-val="택배">택배</button>
+                                    <button type="button" onclick="selectMethod('return', '공연장')" class="method-chip" data-val="공연장">공연장</button>
+                                    <button type="button" onclick="selectMethod('return', '당일반납')" class="method-chip" data-val="당일반납">당일반납</button>
+                                </div>
+                                <input type="hidden" id="edit-return-way">
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -322,7 +366,7 @@
     </div>
 
     <!-- 토스 스타일 알림창 -->
-    <div id="app-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center px-6">
+    <div id="app-modal" class="fixed inset-0 hidden flex items-center justify-center px-6" style="z-index: 9999;">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onclick="closeAppModal()"></div>
         <div id="app-modal-box" class="bg-white rounded-[28px] p-7 w-full max-w-xs relative z-10 shadow-2xl transform transition-all">
             <div class="text-center mb-6">
@@ -334,17 +378,38 @@
         </div>
     </div>
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbx3s9Aa-z6j9MKdRUn-CJjLKW1JHmI12S5xb3-b9UIlACmY0Ag3ELEUA902pXwuN_oS5Q/exec"; 
-        const MODEL_LIST = ['23U', '24U', '25U', '17P', '17PM'];
+    <!-- 캘린더 모달 -->
+    <div id="calendar-modal-root">
+        <div class="modal-overlay" onclick="closeCalendar()"></div>
+        <div class="center-modal shadow-2xl bg-white">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center rounded-t-[28px]">
+                <h2 class="text-lg font-bold text-slate-800">날짜 선택</h2>
+                <button onclick="closeCalendar()" class="p-2 text-slate-400 transition-all">✕</button>
+            </div>
+            <div class="p-5">
+                <div class="flex justify-between items-center mb-6 px-4">
+                    <button onclick="moveMonth(-1)" class="p-2 text-slate-500 active:scale-75 transition-all">◀</button>
+                    <div id="cal-month-title" class="text-lg font-black text-slate-900"></div>
+                    <button onclick="moveMonth(1)" class="p-2 text-slate-500 active:scale-75 transition-all">▶</button>
+                </div>
+                <div class="cal-header-grid mb-3">
+                    <div class="text-[11px] font-bold text-red-400">일</div>
+                    <div class="text-[11px] font-bold text-slate-400">월</div>
+                    <div class="text-[11px] font-bold text-slate-400">화</div>
+                    <div class="text-[11px] font-bold text-slate-400">수</div>
+                    <div class="text-[11px] font-bold text-slate-400">목</div>
+                    <div class="text-[11px] font-bold text-slate-400">금</div>
+                    <div class="text-[11px] font-bold text-blue-400">토</div>
+                </div>
+                <div id="cal-grid" class="cal-body-grid gap-y-1"></div>
+            </div>
+        </div>
+    </div>
 
-        // 정렬 순서 정의
-        const STATUS_PRIORITY = {
-            '예약신청': 1,
-            '확정': 2,
-            '반납완료': 3,
-            '취소': 4
-        };
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwI5I0-DixwuepqkZSm9SDYDYu6hzKH6QSs8L3LR6ZlBPJyk1O_M_uI6DUVkvOVNYvscQ/exec"; 
+        const MODEL_LIST = ['23U', '24U', '25U', '17P', '17PM'];
+        const STATUS_PRIORITY = { '예약신청': 1, '확정': 2, '반납완료': 3, '취소': 4 };
 
         let allData = [];
         let currentFilterStatus = 'all';
@@ -352,6 +417,7 @@
         let currentDeliveryFilter = 'all';
         let currentReturnFilter = 'all';
         let isVenueMode = false;
+        let specialFilter = null; 
         let selectedDate = null; 
         let calCurrentDate = new Date(); 
 
@@ -363,7 +429,6 @@
                 const res = await fetch(`${API_URL}?type=admin_list`);
                 const json = await res.json();
                 if(json.result === 'success') {
-                    // [변경] 초기 데이터 정렬: 상태순(신청-확정-반납-취소) -> 시간순(최신순)
                     allData = json.data.sort(sortLogic);
                     filterData();
                 } else { showToast("데이터 로드 실패"); }
@@ -371,14 +436,10 @@
             finally { toggleLoading(false); }
         }
 
-        // 정렬 로직 함수화 (상태 순서 우선, 같은 상태 내에서는 최신순)
         function sortLogic(a, b) {
             const pA = STATUS_PRIORITY[a.status] || 5;
             const pB = STATUS_PRIORITY[b.status] || 5;
-            
-            if (pA !== pB) return pA - pB; // 상태 우선 정렬
-            
-            // 보조 정렬: 접수 시간 최신순
+            if (pA !== pB) return pA - pB; 
             const timeA = new Date(a.orderTime).getTime();
             const timeB = new Date(b.orderTime).getTime();
             if (!isNaN(timeA) && !isNaN(timeB)) return timeB - timeA;
@@ -394,7 +455,11 @@
 
         function filterData() {
             const query = document.getElementById('search-input').value.toLowerCase();
+            const today = new Date(); today.setHours(0,0,0,0);
             
+            let thisWeekParcelTargetCount = 0;
+            let thisWeekOfficeTargetCount = 0;
+
             const counts = { 
                 model: { 'all': 0, '23U': 0, '24U': 0, '25U': 0, '17P': 0, '17PM': 0, '백업': 0, '연장': 0 },
                 delivery: { 'all': 0, '택배': 0, '공연장': 0, '사무실': 0 },
@@ -407,19 +472,36 @@
                 const phone = (item.phone || '').toLowerCase();
                 const model = (item.model || '').toUpperCase();
                 const delivery = (item.delivery || '');
-                const returnWay = (item.returnWay || '');
                 const status = (item.status || '');
+                const tracking = (item.trackingNumber || '').toString().trim();
+                const startDateStr = item.startDate;
+                const returnWay = (item.returnWay || '');
+                
+                let isThisWeekParcelTarget = false;
+                let isThisWeekOfficeTarget = false;
+
+                if (startDateStr && status !== '취소') {
+                    const startDate = new Date(startDateStr);
+                    const diffTime = startDate.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (delivery.includes('택배') && !tracking && diffDays >= 1 && diffDays <= 5) {
+                        isThisWeekParcelTarget = true;
+                        thisWeekParcelTargetCount++;
+                    }
+                    if (delivery.includes('사무실') && diffDays >= 1 && diffDays <= 2) {
+                        isThisWeekOfficeTarget = true;
+                        thisWeekOfficeTargetCount++;
+                    }
+                }
 
                 const matchQuery = name.includes(query) || phone.includes(query) || model.includes(query);
                 let matchDate = !selectedDate || (selectedDate === item.startDate);
-                
+
+                // 수량 집계
                 if (matchDate) {
                     counts.model.all++;
-                    if (model.includes('23U')) counts.model['23U']++;
-                    if (model.includes('24U')) counts.model['24U']++;
-                    if (model.includes('25U')) counts.model['25U']++;
-                    if (model.includes('17P') && !model.includes('17PM')) counts.model['17P']++;
-                    if (model.includes('17PM')) counts.model['17PM']++;
+                    MODEL_LIST.forEach(m => { if(model.includes(m)) counts.model[m]++; });
                     if (model.includes('백업')) counts.model['백업']++;
                     if (model.includes('연장')) counts.model['연장']++;
 
@@ -439,29 +521,34 @@
                     }
                 }
 
+                if (specialFilter === 'this_week_parcel') {
+                    if (!isThisWeekParcelTarget) return false;
+                } else if (specialFilter === 'this_week_office') {
+                    if (!isThisWeekOfficeTarget) return false;
+                } else {
+                    if (currentFilterStatus !== 'all' && status !== currentFilterStatus) return false;
+                }
+
                 const matchModel = (currentModelFilter === 'all') || model.includes(currentModelFilter.toUpperCase());
                 const matchDelivery = (currentDeliveryFilter === 'all') || delivery.includes(currentDeliveryFilter);
-                const matchReturn = (currentReturnFilter === 'all') || returnWay.includes(currentReturnFilter);
-                
-                let matchStatus = true;
+                const matchReturn = (currentReturnFilter === 'all') || (item.returnWay || '').includes(currentReturnFilter);
+
                 if (isVenueMode) {
                     if (!delivery.includes('공연') && !delivery.includes('현장')) return false;
                     const cleanModel = model.replace(/\s*\+?\s*보조배터리/g, '').trim();
                     const isAssigned = /\d$/.test(cleanModel);
                     if (currentFilterStatus === 'venue_remaining' && isAssigned) return false;
                     if (currentFilterStatus === 'venue_pickedup' && !isAssigned) return false;
-                } else {
-                    matchStatus = (currentFilterStatus === 'all') || (status === currentFilterStatus);
                 }
 
-                return matchQuery && matchDate && matchModel && matchDelivery && matchReturn && matchStatus;
+                return matchQuery && matchDate && matchModel && matchDelivery && matchReturn;
             });
 
+            document.getElementById('count-this-week-parcel').innerText = thisWeekParcelTargetCount;
+            document.getElementById('count-this-week-office').innerText = thisWeekOfficeTargetCount;
+
             updateFilterUI(counts);
-            
-            // [변경] 정렬 적용: 상태순 -> 시간순
             filtered.sort(sortLogic);
-            
             renderList(filtered); 
         }
 
@@ -485,10 +572,48 @@
             }
         }
 
+        function setSpecialFilter(type) {
+            if (specialFilter === type) {
+                specialFilter = null;
+                document.getElementById('btn-quick-this-week').classList.remove('active');
+                document.getElementById('btn-quick-this-week-office').classList.remove('active');
+            } else {
+                specialFilter = type;
+                currentFilterStatus = 'all'; 
+                document.getElementById('btn-quick-this-week').classList.toggle('active', type === 'this_week_parcel');
+                document.getElementById('btn-quick-this-week-office').classList.toggle('active', type === 'this_week_office');
+                document.querySelectorAll('.chip-btn').forEach(b => {
+                   if(b.id !== 'btn-quick-this-week' && b.id !== 'btn-quick-this-week-office') b.classList.remove('active');
+                });
+            }
+            filterData();
+        }
+
+        function filterStatus(status) {
+            specialFilter = null; 
+            currentFilterStatus = status;
+            document.getElementById('btn-quick-this-week').classList.remove('active');
+            document.getElementById('btn-quick-this-week-office').classList.remove('active');
+            document.querySelectorAll('.chip-btn').forEach(btn => {
+                const btnText = btn.innerText;
+                const pureText = btnText.split('(')[0].trim();
+                if (status === 'all') btn.classList.toggle('active', pureText === '전체');
+                else btn.classList.toggle('active', pureText === status.replace('예약신청', '신청'));
+            });
+            filterData();
+        }
+
+        function toggleSection(contentId, arrowId) {
+            const content = document.getElementById(contentId);
+            const arrow = document.getElementById(arrowId);
+            content.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
+        }
+
         function renderList(list) {
             const container = document.getElementById('list-container');
             container.innerHTML = '';
-            if(!list.length) { container.innerHTML = `<div class="col-span-2 py-20 text-center text-slate-400 text-xs font-medium">결과가 없습니다.</div>`; return; }
+            if(!list.length) { container.innerHTML = `<div class="col-span-2 py-20 text-center text-slate-400 text-sm font-medium">정보가 없습니다.</div>`; return; }
             
             list.forEach(item => {
                 let borderColor = 'border-slate-200';
@@ -580,8 +705,8 @@
             const btn = document.getElementById('venue-toggle');
             const venueFilters = document.getElementById('venue-filters');
             btn.className = isVenueMode ? 
-                "w-[60px] flex items-center justify-center h-[44px] px-1 rounded-xl text-[10px] font-black border border-blue-500 bg-blue-50 text-blue-600 shadow-sm shrink-0" : 
-                "w-[60px] flex items-center justify-center h-[44px] px-1 rounded-xl text-[10px] font-black border border-slate-200 bg-white text-slate-500 shadow-sm shrink-0";
+                "w-[50px] flex items-center justify-center h-[38px] px-1 rounded-xl text-[9px] font-black border border-blue-500 bg-blue-50 text-blue-600 shadow-sm shrink-0" : 
+                "w-[50px] flex items-center justify-center h-[38px] px-1 rounded-xl text-[9px] font-black border border-slate-200 bg-white text-slate-500 shadow-sm shrink-0";
             if(venueFilters) venueFilters.classList.toggle('hidden', !isVenueMode);
             if (!isVenueMode) {
                 currentFilterStatus = 'all';
@@ -623,6 +748,16 @@
             }
         }
 
+        // [수정] 수령/반납 방법 선택 함수 (다중 클래스 선택자 지원 및 초기화 로직)
+        function selectMethod(type, value) {
+            document.getElementById(`edit-${type === 'delivery' ? 'delivery' : 'return-way'}`).value = value;
+            const containerId = type === 'delivery' ? 'delivery-method-list' : 'return-method-list';
+            document.querySelectorAll(`#${containerId} .method-chip`).forEach(btn => {
+                // 정확한 값 일치 여부로 활성화 상태 토글
+                btn.classList.toggle('active', btn.dataset.val === value);
+            });
+        }
+
         function openModal(item) {
             const root = document.getElementById('modal-root');
             if(!root) return;
@@ -632,12 +767,29 @@
             document.getElementById('edit-phone').value = item.phone || '';
             document.getElementById('edit-start').value = item.startDate || '';
             document.getElementById('edit-end').value = item.endDate || '';
-            document.getElementById('edit-delivery').value = item.delivery || '';
-            document.getElementById('edit-return-way').value = item.returnWay || '';
             document.getElementById('edit-tracking').value = item.trackingNumber || '';
             document.getElementById('edit-memo').value = item.memo || '';
             const priceField = document.getElementById('edit-price');
             if(priceField) priceField.value = (item.totalPrice || 0);
+
+            // [수정] 데이터에 포함된 텍스트 기준으로 칩 선택 (includes 활용하여 자동 선택)
+            const deliveryVal = item.delivery || '';
+            let selectedDelivery = '';
+            if(deliveryVal.includes('택배')) selectedDelivery = '택배';
+            else if(deliveryVal.includes('공연장') || deliveryVal.includes('현장')) selectedDelivery = '공연장';
+            else if(deliveryVal.includes('사무실')) selectedDelivery = '사무실';
+            else if(deliveryVal.includes('퀵')) selectedDelivery = '퀵';
+            selectMethod('delivery', selectedDelivery);
+            document.getElementById('edit-delivery').value = deliveryVal; // 원본 값 유지
+
+            const returnVal = item.returnWay || '';
+            let selectedReturn = '';
+            if(returnVal.includes('택배')) selectedReturn = '택배';
+            else if(returnVal.includes('공연장') || returnVal.includes('현장')) selectedReturn = '공연장';
+            else if(returnVal.includes('당일')) selectedReturn = '당일반납';
+            selectMethod('return', selectedReturn);
+            document.getElementById('edit-return-way').value = returnVal; // 원본 값 유지
+
             let rawModel = item.model || '';
             const hasBattery = rawModel.includes('보조배터리');
             rawModel = rawModel.replace(/\+?\s*보조배터리/g, '').trim();
@@ -708,14 +860,12 @@
             catch(err) { showToast("저장에 실패했습니다."); } finally { btn.innerText = '수정 완료하기'; btn.disabled = false; }
         }
 
-        function processDelete() {
-            const rowId = document.getElementById('edit-row').value;
-            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'delete', row: rowId }) })
-            .then(() => { showAppAlert("삭제되었습니다.", "완료", "🗑️"); closeModal(); fetchData(); });
-        }
-
         function confirmDelete() {
-            showAppConfirm("이 예약을 정말 삭제할까요?", processDelete, "삭제 확인", "삭제하기", "bg-[#DC2626]", "🗑️");
+            showAppConfirm("이 예약을 정말 삭제할까요?", () => {
+                const rowId = document.getElementById('edit-row').value;
+                fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'delete', row: rowId }) })
+                .then(() => { showAppAlert("삭제되었습니다.", "완료", "🗑️"); closeModal(); fetchData(); });
+            }, "삭제 확인", "삭제하기", "bg-[#DC2626]", "🗑️");
         }
 
         function copyToClipboard(text, e) {
@@ -749,6 +899,16 @@
         function setDeliveryFilter(d) { currentDeliveryFilter = d; document.querySelectorAll('.delivery-filter-item').forEach(b => b.classList.toggle('active', b.dataset.id === d)); filterData(); }
         function setReturnFilter(r) { currentReturnFilter = r; document.querySelectorAll('.return-filter-item').forEach(b => b.classList.toggle('active', b.dataset.id === r)); filterData(); }
 
+        function toggleVenueMode() {
+            isVenueMode = !isVenueMode;
+            const btn = document.getElementById('venue-toggle');
+            const venueFilters = document.getElementById('venue-filters');
+            btn.className = isVenueMode ? "w-[50px] flex items-center justify-center h-[38px] px-1 rounded-xl text-[9px] font-black border border-blue-500 bg-blue-50 text-blue-600 shadow-sm shrink-0" : "w-[50px] flex items-center justify-center h-[38px] px-1 rounded-xl text-[9px] font-black border border-slate-200 bg-white text-slate-500 shadow-sm shrink-0";
+            if(venueFilters) venueFilters.classList.toggle('hidden', !isVenueMode);
+            filterData();
+        }
+        function setVenueFilter(v) { currentFilterStatus = v; document.querySelectorAll('.venue-active-btn').forEach(b => b.classList.toggle('active', b.dataset.val === v)); filterData(); }
+
         function openCalendar() {
             renderCalendar();
             const root = document.getElementById('calendar-modal-root');
@@ -773,6 +933,13 @@
             }
         }
         function clearDate(e) { e.stopPropagation(); selectedDate = null; document.getElementById('active-date-bar').classList.add('hidden'); document.getElementById('date-active-dot').classList.add('hidden'); filterData(); }
+        
+        function toggleSection(contentId, arrowId) {
+            const content = document.getElementById(contentId);
+            const arrow = document.getElementById(arrowId);
+            content.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
+        }
     </script>
 </body>
 </html>
