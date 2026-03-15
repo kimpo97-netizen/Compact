@@ -943,9 +943,14 @@
                 totalPrice: document.getElementById('edit-price').value
             };
 
-            // 1. 낙관적 업데이트: 서버 응답을 기다리지 않고 화면 데이터를 즉시 변경
+            // 1. 실패 시 복구를 위한 '원본 데이터 백업'
             const targetIndex = allData.findIndex(item => String(item.row) === String(rowId));
+            let originalData = null;
+            
             if(targetIndex !== -1) {
+                originalData = { ...allData[targetIndex] };
+                
+                // 낙관적 업데이트: 서버 응답을 기다리지 않고 화면 데이터를 즉시 변경
                 allData[targetIndex] = {
                     ...allData[targetIndex],
                     name: payload.name,
@@ -969,9 +974,21 @@
             btn.innerText = '수정 완료하기'; 
             btn.disabled = false;
 
-            // 3. 백그라운드 서버 저장 (await 없이 조용히 처리)
-            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-                .catch(err => console.error("저장 실패", err));
+            // 3. 백그라운드 서버 저장 및 실패 시 롤백(Rollback)
+            fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.result !== 'success') throw new Error("서버에서 처리를 실패했습니다.");
+                })
+                .catch(err => {
+                    console.error("저장 실패", err);
+                    if(targetIndex !== -1 && originalData) {
+                        // 에러 발생 시 원본 데이터로 다시 되돌리기
+                        allData[targetIndex] = originalData; 
+                        filterData(); // 화면 원상복구
+                        showAppAlert("인터넷 연결 불안정 또는 서버 오류로 수정 내역이 저장되지 않았습니다. 다시 시도해 주세요.", "🚨 저장 실패", "⚠️");
+                    }
+                });
         }
 
         function confirmDelete() {
@@ -979,7 +996,10 @@
                 const rowId = document.getElementById('edit-row').value;
                 const sheetName = document.getElementById('edit-sheet-name').value;
                 
-                // 1. 낙관적 업데이트: 화면에서 즉시 삭제
+                // 1. 실패 시 복구를 위한 '원본 데이터 백업'
+                const targetItem = allData.find(item => String(item.row) === String(rowId));
+                
+                // 낙관적 업데이트: 화면에서 즉시 삭제
                 allData = allData.filter(item => String(item.row) !== String(rowId));
                 
                 // 2. 즉시 UI 갱신 및 모달 닫기
@@ -987,9 +1007,21 @@
                 closeModal();
                 showAppAlert("삭제 시트로 이동되었습니다.", "완료", "🗑️");
                 
-                // 3. 백그라운드 서버 전송 (await 없이 조용히 처리)
-                fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'delete', row: rowId, sheetName: sheetName }) })
-                .catch(err => console.error("삭제 실패", err));
+                // 3. 백그라운드 서버 전송 및 실패 시 롤백(Rollback)
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ type: 'delete', row: rowId, sheetName: sheetName }) })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.result !== 'success') throw new Error("서버에서 삭제를 실패했습니다.");
+                })
+                .catch(err => {
+                    console.error("삭제 실패", err);
+                    if(targetItem) {
+                        // 에러 발생 시 삭제했던 데이터를 다시 리스트에 넣기
+                        allData.push(targetItem); 
+                        filterData(); // 화면 원상복구
+                        showAppAlert("인터넷 연결 불안정 또는 서버 오류로 삭제되지 않았습니다. 다시 시도해 주세요.", "🚨 삭제 실패", "⚠️");
+                    }
+                });
             }, "삭제 이동", "이동하기", "bg-[#DC2626]", "🗑️");
         }
 
