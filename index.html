@@ -919,14 +919,17 @@
             if(e) e.preventDefault();
             const btn = document.getElementById('save-btn');
             btn.innerText = '저장 중...'; btn.disabled = true;
+            
+            const rowId = document.getElementById('edit-row').value;
             const modelType = document.getElementById('edit-model-type').value;
             const deviceId = document.getElementById('edit-device-id').value.trim();
-            let finalModel = (modelType === '기타' ? deviceId : modelType + deviceId) + (document.getElementById('edit-battery').checked ? "+보조배터리" : "");
+            const isBattery = document.getElementById('edit-battery').checked;
+            let finalModel = (modelType === '기타' ? deviceId : modelType + deviceId) + (isBattery ? "+보조배터리" : "");
             
             const payload = {
                 type: 'update', 
-                row: document.getElementById('edit-row').value, 
-                sheetName: document.getElementById('edit-sheet-name').value, // 추가된 시트명
+                row: rowId, 
+                sheetName: document.getElementById('edit-sheet-name').value,
                 name: document.getElementById('edit-name').value, 
                 phone: document.getElementById('edit-phone').value,
                 startDate: document.getElementById('edit-start').value, 
@@ -939,17 +942,54 @@
                 memo: document.getElementById('edit-memo').value, 
                 totalPrice: document.getElementById('edit-price').value
             };
-            try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }); showAppAlert("정보를 수정했습니다.", "완료", "✅"); closeModal(); setTimeout(fetchData, 500); } 
-            catch(err) { showToast("저장에 실패했습니다."); } finally { btn.innerText = '수정 완료하기'; btn.disabled = false; }
+
+            // 1. 낙관적 업데이트: 서버 응답을 기다리지 않고 화면 데이터를 즉시 변경
+            const targetIndex = allData.findIndex(item => String(item.row) === String(rowId));
+            if(targetIndex !== -1) {
+                allData[targetIndex] = {
+                    ...allData[targetIndex],
+                    name: payload.name,
+                    phone: payload.phone,
+                    startDate: payload.startDate,
+                    endDate: payload.endDate,
+                    delivery: payload.delivery,
+                    returnWay: payload.returnWay,
+                    status: payload.status,
+                    trackingNumber: payload.tracking,
+                    model: payload.model,
+                    memo: payload.memo,
+                    totalPrice: payload.totalPrice
+                };
+            }
+
+            // 2. 즉시 UI 갱신 및 모달 닫기
+            filterData();
+            closeModal();
+            showAppAlert("정보를 수정했습니다.", "완료", "✅"); 
+            btn.innerText = '수정 완료하기'; 
+            btn.disabled = false;
+
+            // 3. 백그라운드 서버 저장 (await 없이 조용히 처리)
+            fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+                .catch(err => console.error("저장 실패", err));
         }
 
         function confirmDelete() {
             showAppConfirm("이 예약을 '삭제' 시트로 이동시킬까요?", () => {
                 const rowId = document.getElementById('edit-row').value;
-                const sheetName = document.getElementById('edit-sheet-name').value; // 추가된 시트명
+                const sheetName = document.getElementById('edit-sheet-name').value;
                 
+                // 1. 낙관적 업데이트: 화면에서 즉시 삭제
+                allData = allData.filter(item => String(item.row) !== String(rowId));
+                
+                // 2. 즉시 UI 갱신 및 모달 닫기
+                filterData();
+                closeModal();
+                showAppAlert("삭제 시트로 이동되었습니다.", "완료", "🗑️");
+                
+                // 3. 백그라운드 서버 전송 (await 없이 조용히 처리)
                 fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ type: 'delete', row: rowId, sheetName: sheetName }) })
-                .then(() => { showAppAlert("삭제 시트로 이동되었습니다.", "완료", "🗑️"); closeModal(); fetchData(); });
+                .catch(err => console.error("삭제 실패", err));
             }, "삭제 이동", "이동하기", "bg-[#DC2626]", "🗑️");
         }
 
@@ -1082,4 +1122,3 @@
     </script>
 </body>
 </html>
-
